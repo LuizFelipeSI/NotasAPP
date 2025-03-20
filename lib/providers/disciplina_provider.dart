@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class DisciplinaProvider with ChangeNotifier {
-  // Armazenando as disciplinas (exemplo simples, poderia vir de um banco de dados)
+
   List<Map<String, dynamic>> _disciplinas = [
     {
       'nome': 'Matemática',
@@ -21,12 +21,10 @@ class DisciplinaProvider with ChangeNotifier {
       'trabalhos': ['30/03/2025'],
       'anotacoes': '',
     },
-    // Adicione mais disciplinas conforme necessário
   ];
 
   List<Map<String, dynamic>> get disciplinas => _disciplinas;
 
-  // Função para atualizar as anotações de uma disciplina
   void updateAnotacao(String nome, String anotacao) {
     final index = _disciplinas.indexWhere(
       (disciplina) => disciplina['nome'] == nome,

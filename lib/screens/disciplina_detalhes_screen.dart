@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/disciplina_provider.dart'; // Adicione a importação do seu provider
+import '../providers/disciplina_provider.dart';
 
 class DisciplinaDetalhesScreen extends StatefulWidget {
   final Map<String, dynamic> disciplina;
@@ -153,6 +153,7 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
+
                 ),
                 const SizedBox(height: 5),
                 TextFormField(
