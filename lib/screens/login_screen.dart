@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/user_provider.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -13,14 +11,20 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  String _username = ''; // Novo estado para o nome de usuário
 
   void _login() {
     String user = _userController.text.trim();
     String password = _passwordController.text.trim();
 
     if (user.isNotEmpty && password.isNotEmpty) {
-      Provider.of<UserProvider>(context, listen: false).login(user);
-      Navigator.pushReplacement(context, _createRoute(const HomeScreen()));
+      setState(() {
+        _username = user; // Atualizando o nome de usuário no estado local
+      });
+      Navigator.pushReplacement(
+        context,
+        _createRoute(HomeScreen(username: _username)),
+      );
     } else {
       ScaffoldMessenger.of(
         context,

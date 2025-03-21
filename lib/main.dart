@@ -1,24 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
-import 'providers/user_provider.dart';
-import 'providers/disciplina_provider.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider(
-          create: (_) => UserProvider(),
-        ), // Provider para o usuário
-        ChangeNotifierProvider(
-          create: (_) => DisciplinaProvider(),
-        ), // Provider para as disciplinas
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {

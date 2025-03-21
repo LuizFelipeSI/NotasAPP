@@ -1,20 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/disciplina_provider.dart';
-import '../providers/user_provider.dart';
 import 'login_screen.dart';
 import 'disciplina_detalhes_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  final String username; // Agora o nome de usuário é passado como parâmetro
+
+  const HomeScreen({super.key, required this.username});
+
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Map<String, dynamic>> disciplinas = [
+    {
+      'nome': 'Matemática',
+      'nota': 8.5,
+      'presenca': '90%',
+      'descricao': 'Álgebra, geometria e cálculos.',
+      'provas': [],
+      'trabalhos': [],
+      'anotacoes': '',
+    },
+    {
+      'nome': 'Português',
+      'nota': 7.8,
+      'presenca': '85%',
+      'descricao': 'Gramática, literatura e redação.',
+      'provas': ['20/03/2025', '15/04/2025'],
+      'trabalhos': ['30/03/2025'],
+      'anotacoes': '',
+    },
+  ];
+
+  void atualizarAnotacao(String nome, String anotacao) {
+    setState(() {
+      final index = disciplinas.indexWhere(
+        (disciplina) => disciplina['nome'] == nome,
+      );
+      if (index != -1) {
+        disciplinas[index]['anotacoes'] = anotacao;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final username = Provider.of<UserProvider>(context).username ?? 'Usuário';
-
-    List<Map<String, dynamic>> disciplinas =
-        Provider.of<DisciplinaProvider>(context).disciplinas;
-
     return Scaffold(
       backgroundColor: Colors.green[50],
       appBar: AppBar(
@@ -28,7 +59,7 @@ class HomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Bem-vindo, $username!',
+              'Bem-vindo, ${widget.username}!',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -84,6 +115,7 @@ class HomeScreen extends StatelessWidget {
                           _createRoute(
                             DisciplinaDetalhesScreen(
                               disciplina: disciplinas[index],
+                              onSalvarAnotacao: atualizarAnotacao,
                             ),
                           ),
                         );
@@ -97,7 +129,6 @@ class HomeScreen extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  Provider.of<UserProvider>(context, listen: false).logout();
                   Navigator.pushReplacement(
                     context,
                     _createRoute(const LoginScreen()),
@@ -105,7 +136,7 @@ class HomeScreen extends StatelessWidget {
                 },
                 style: ElevatedButton.styleFrom(
                   foregroundColor: Colors.white,
-                  backgroundColor: Colors.red[700], // White text color
+                  backgroundColor: Colors.red[700],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -125,14 +156,14 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
-}
 
-PageRouteBuilder _createRoute(Widget page) {
-  return PageRouteBuilder(
-    transitionDuration: const Duration(milliseconds: 500),
-    pageBuilder: (context, animation, secondaryAnimation) => page,
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return FadeTransition(opacity: animation, child: child);
-    },
-  );
+  PageRouteBuilder _createRoute(Widget page) {
+    return PageRouteBuilder(
+      transitionDuration: const Duration(milliseconds: 500),
+      pageBuilder: (context, animation, secondaryAnimation) => page,
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        return FadeTransition(opacity: animation, child: child);
+      },
+    );
+  }
 }
