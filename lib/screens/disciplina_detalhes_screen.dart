@@ -33,10 +33,12 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
   }
 
   void salvarAnotacao() {
-    widget.onSalvarAnotacao(
-      widget.disciplina['nome'],
-      _anotacoesController.text,
-    );
+    setState(() {
+      widget.onSalvarAnotacao(
+        widget.disciplina['nome'],
+        _anotacoesController.text,
+      );
+    });
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Anotação salva!')));
