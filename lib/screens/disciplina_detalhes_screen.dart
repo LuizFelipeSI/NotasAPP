@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
 import 'traducao_screen.dart';
+import 'package:flutter_application_1/services/database_helper.dart';
 
 class DisciplinaDetalhesScreen extends StatefulWidget {
   final Map<String, dynamic> disciplina;
-  final Function(String, String) onSalvarAnotacao;
-  final Function(String, List<String>) onAtualizarProvas;
-  final Function(String, List<String>) onAtualizarTrabalhos;
+  final DatabaseHelper dbHelper;
 
   const DisciplinaDetalhesScreen({
     super.key,
     required this.disciplina,
-    required this.onSalvarAnotacao,
-    required this.onAtualizarProvas,
-    required this.onAtualizarTrabalhos,
+    required this.dbHelper,
   });
 
   @override
@@ -27,6 +24,8 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
   late TextEditingController _editarTrabalhoController;
   int? _provaEditandoIndex;
   int? _trabalhoEditandoIndex;
+  List<Map<String, dynamic>> _provas = [];
+  List<Map<String, dynamic>> _trabalhos = [];
 
   @override
   void initState() {
@@ -36,6 +35,16 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
     _novoTrabalhoController = TextEditingController();
     _editarProvaController = TextEditingController();
     _editarTrabalhoController = TextEditingController();
+    _carregarProvasETrabalhos();
+  }
+
+  Future<void> _carregarProvasETrabalhos() async {
+    final provas = await widget.dbHelper.getProvas(widget.disciplina['id']);
+    final trabalhos = await widget.dbHelper.getTrabalhos(widget.disciplina['id']);
+    setState(() {
+      _provas = provas;
+      _trabalhos = trabalhos;
+    });
   }
 
   @override
@@ -48,84 +57,87 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
     super.dispose();
   }
 
-  void salvarAnotacao() {
-    setState(() {
-      widget.onSalvarAnotacao(
-        widget.disciplina['nome'],
-        _anotacoesController.text,
-      );
-    });
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anotação salva!')));
+  Future<void> salvarAnotacao() async {
+    await widget.dbHelper.updateAnotacao(
+      widget.disciplina['id'],
+      _anotacoesController.text,
+    );
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Anotação salva!')));
   }
 
-  void adicionarProva() {
+  Future<void> adicionarProva() async {
     if (_novaProvaController.text.isEmpty) return;
     
-    setState(() {
-      widget.disciplina['provas'].add(_novaProvaController.text);
-      widget.onAtualizarProvas(widget.disciplina['nome'], List.from(widget.disciplina['provas']));
-      _novaProvaController.clear();
-    });
+    await widget.dbHelper.insertProva(
+      widget.disciplina['id'],
+      _novaProvaController.text,
+    );
+    _novaProvaController.clear();
+    await _carregarProvasETrabalhos();
   }
 
-  void removerProva(int index) {
-    setState(() {
-      widget.disciplina['provas'].removeAt(index);
-      widget.onAtualizarProvas(widget.disciplina['nome'], List.from(widget.disciplina['provas']));
-    });
+  Future<void> removerProva(int index) async {
+    await widget.dbHelper.deleteProva(_provas[index]['id']);
+    await _carregarProvasETrabalhos();
   }
 
-  void editarProva(int index) {
+  Future<void> editarProva(int index) async {
     setState(() {
       _provaEditandoIndex = index;
-      _editarProvaController.text = widget.disciplina['provas'][index];
+      _editarProvaController.text = _provas[index]['data'];
     });
   }
 
-  void salvarEdicaoProva() {
+  Future<void> salvarEdicaoProva() async {
     if (_provaEditandoIndex == null || _editarProvaController.text.isEmpty) return;
     
+    await widget.dbHelper.updateProva(
+      _provas[_provaEditandoIndex!]['id'],
+      _editarProvaController.text,
+    );
     setState(() {
-      widget.disciplina['provas'][_provaEditandoIndex!] = _editarProvaController.text;
-      widget.onAtualizarProvas(widget.disciplina['nome'], List.from(widget.disciplina['provas']));
       _provaEditandoIndex = null;
       _editarProvaController.clear();
     });
+    await _carregarProvasETrabalhos();
   }
 
-  void adicionarTrabalho() {
+  Future<void> adicionarTrabalho() async {
     if (_novoTrabalhoController.text.isEmpty) return;
     
-    setState(() {
-      widget.disciplina['trabalhos'].add(_novoTrabalhoController.text);
-      widget.onAtualizarTrabalhos(widget.disciplina['nome'], List.from(widget.disciplina['trabalhos']));
-      _novoTrabalhoController.clear();
-    });
+    await widget.dbHelper.insertTrabalho(
+      widget.disciplina['id'],
+      _novoTrabalhoController.text,
+    );
+    _novoTrabalhoController.clear();
+    await _carregarProvasETrabalhos();
   }
 
-  void removerTrabalho(int index) {
-    setState(() {
-      widget.disciplina['trabalhos'].removeAt(index);
-      widget.onAtualizarTrabalhos(widget.disciplina['nome'], List.from(widget.disciplina['trabalhos']));
-    });
+  Future<void> removerTrabalho(int index) async {
+    await widget.dbHelper.deleteTrabalho(_trabalhos[index]['id']);
+    await _carregarProvasETrabalhos();
   }
 
-  void editarTrabalho(int index) {
+  Future<void> editarTrabalho(int index) async {
     setState(() {
       _trabalhoEditandoIndex = index;
-      _editarTrabalhoController.text = widget.disciplina['trabalhos'][index];
+      _editarTrabalhoController.text = _trabalhos[index]['data'];
     });
   }
 
-  void salvarEdicaoTrabalho() {
+  Future<void> salvarEdicaoTrabalho() async {
     if (_trabalhoEditandoIndex == null || _editarTrabalhoController.text.isEmpty) return;
     
+    await widget.dbHelper.updateTrabalho(
+      _trabalhos[_trabalhoEditandoIndex!]['id'],
+      _editarTrabalhoController.text,
+    );
     setState(() {
-      widget.disciplina['trabalhos'][_trabalhoEditandoIndex!] = _editarTrabalhoController.text;
-      widget.onAtualizarTrabalhos(widget.disciplina['nome'], List.from(widget.disciplina['trabalhos']));
       _trabalhoEditandoIndex = null;
       _editarTrabalhoController.clear();
     });
+    await _carregarProvasETrabalhos();
   }
 
   void cancelarEdicao() {
@@ -149,7 +161,17 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
             IconButton(
               icon: const Icon(Icons.translate),
               onPressed: () {
-                Navigator.push(context, _createRoute(const TraducaoScreen()));
+                Navigator.push(
+                  context, 
+                  PageRouteBuilder(
+                    transitionDuration: const Duration(milliseconds: 500),
+                    pageBuilder: (context, animation, secondaryAnimation) => 
+                      const TraducaoScreen(),
+                    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                      return FadeTransition(opacity: animation, child: child);
+                    },
+                  ),
+                );
               },
               tooltip: 'Tradutor',
             ),
@@ -210,11 +232,11 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  if (widget.disciplina['provas'].isNotEmpty)
+                  if (_provas.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: List.generate(
-                        widget.disciplina['provas'].length,
+                        _provas.length,
                         (index) {
                           if (_provaEditandoIndex == index) {
                             return Row(
@@ -243,7 +265,7 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    '- ${widget.disciplina['provas'][index]}',
+                                    '- ${_provas[index]['data']}',
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ),
@@ -296,11 +318,11 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
                     ),
                   ),
                   const SizedBox(height: 5),
-                  if (widget.disciplina['trabalhos'].isNotEmpty)
+                  if (_trabalhos.isNotEmpty)
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: List.generate(
-                        widget.disciplina['trabalhos'].length,
+                        _trabalhos.length,
                         (index) {
                           if (_trabalhoEditandoIndex == index) {
                             return Row(
@@ -329,7 +351,7 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
                               children: [
                                 Expanded(
                                   child: Text(
-                                    '- ${widget.disciplina['trabalhos'][index]}',
+                                    '- ${_trabalhos[index]['data']}',
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ),
@@ -412,16 +434,6 @@ class _DisciplinaDetalhesScreenState extends State<DisciplinaDetalhesScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  PageRouteBuilder _createRoute(Widget page) {
-    return PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 500),
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(opacity: animation, child: child);
-      },
     );
   }
 }

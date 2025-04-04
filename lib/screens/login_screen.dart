@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'package:flutter_application_1/services/database_helper.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,20 +12,38 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _userController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  String _username = ''; // Novo estado para o nome de usuário
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
 
-  void _login() {
+  void _login() async {
     String user = _userController.text.trim();
     String password = _passwordController.text.trim();
 
     if (user.isNotEmpty && password.isNotEmpty) {
-      setState(() {
-        _username = user; // Atualizando o nome de usuário no estado local
-      });
-      Navigator.pushReplacement(
-        context,
-        _createRoute(HomeScreen(username: _username)),
-      );
+      final usuario = await _dbHelper.login(user, password);
+
+      if (usuario != null) {
+        Navigator.pushReplacement(
+          context,
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 500),
+            pageBuilder:
+                (context, animation, secondaryAnimation) =>
+                    HomeScreen(userId: usuario['id'], username: user),
+            transitionsBuilder: (
+              context,
+              animation,
+              secondaryAnimation,
+              child,
+            ) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Usuário ou senha incorretos')),
+        );
+      }
     } else {
       ScaffoldMessenger.of(
         context,
@@ -50,11 +69,10 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Ícone do App na tela de login
                   const SizedBox(height: 20),
                   Image.asset(
-                    'assets/images/app_icon.png', // Caminho para o ícone
-                    width: 100, // Tamanho do ícone
+                    'assets/images/app_icon.png',
+                    width: 100,
                     height: 100,
                   ),
                   const SizedBox(height: 20),
@@ -98,16 +116,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  PageRouteBuilder _createRoute(Widget page) {
-    return PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 500),
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(opacity: animation, child: child);
-      },
     );
   }
 }

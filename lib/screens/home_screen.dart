@@ -1,71 +1,36 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
 import 'disciplina_detalhes_screen.dart';
+import 'login_screen.dart';
+import 'package:flutter_application_1/services/database_helper.dart';
 
 class HomeScreen extends StatefulWidget {
+  final int userId;
   final String username;
 
-  const HomeScreen({super.key, required this.username});
+  const HomeScreen({
+    super.key, 
+    required this.userId, 
+    required this.username
+  });
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Map<String, dynamic>> disciplinas = [
-    {
-      'nome': 'Matemática',
-      'nota': 8.5,
-      'presenca': '90%',
-      'descricao': 'Álgebra, geometria e cálculos.',
-      'provas': [],
-      'trabalhos': [],
-      'anotacoes': '',
-    },
-    {
-      'nome': 'Português',
-      'nota': 7.8,
-      'presenca': '85%',
-      'descricao': 'Gramática, literatura e redação.',
-      'provas': ['20/03/2025', '15/04/2025'],
-      'trabalhos': ['30/03/2025'],
-      'anotacoes': '',
-    },
-    {
-      'nome': 'Inglês',
-      'nota': 7.8,
-      'presenca': '85%',
-      'descricao': 'Gramática, literatura e redação.',
-      'provas': ['20/03/2025', '15/04/2025'],
-      'trabalhos': ['30/03/2025'],
-      'anotacoes': '',
-    },
-  ];
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
+  List<Map<String, dynamic>> _disciplinas = [];
 
-  void atualizarAnotacao(String nome, String anotacao) {
-    setState(() {
-      final index = disciplinas.indexWhere((disciplina) => disciplina['nome'] == nome);
-      if (index != -1) {
-        disciplinas[index]['anotacoes'] = anotacao;
-      }
-    });
+  @override
+  void initState() {
+    super.initState();
+    _carregarDisciplinas();
   }
 
-  void atualizarProvas(String nome, List<String> novasProvas) {
+  Future<void> _carregarDisciplinas() async {
+    final disciplinas = await _dbHelper.getDisciplinas(widget.userId);
     setState(() {
-      final index = disciplinas.indexWhere((disciplina) => disciplina['nome'] == nome);
-      if (index != -1) {
-        disciplinas[index]['provas'] = novasProvas;
-      }
-    });
-  }
-
-  void atualizarTrabalhos(String nome, List<String> novosTrabalhos) {
-    setState(() {
-      final index = disciplinas.indexWhere((disciplina) => disciplina['nome'] == nome);
-      if (index != -1) {
-        disciplinas[index]['trabalhos'] = novosTrabalhos;
-      }
+      _disciplinas = disciplinas;
     });
   }
 
@@ -103,7 +68,7 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
-                itemCount: disciplinas.length,
+                itemCount: _disciplinas.length,
                 itemBuilder: (context, index) {
                   return Card(
                     elevation: 4,
@@ -117,14 +82,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         horizontal: 20,
                       ),
                       title: Text(
-                        disciplinas[index]['nome'],
+                        _disciplinas[index]['nome'],
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       subtitle: Text(
-                        'Nota: ${disciplinas[index]['nota']} | Presença: ${disciplinas[index]['presenca']}',
+                        'Nota: ${_disciplinas[index]['nota']} | Presença: ${_disciplinas[index]['presenca']}',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.green[600],
@@ -134,16 +99,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         backgroundColor: Colors.green,
                         child: Icon(Icons.school, color: Colors.white),
                       ),
-                      onTap: () {
+                      onTap: () async {
+                        final provas = await _dbHelper.getProvas(_disciplinas[index]['id']);
+                        final trabalhos = await _dbHelper.getTrabalhos(_disciplinas[index]['id']);
+                        final anotacao = await _dbHelper.getAnotacao(_disciplinas[index]['id']);
+                        
                         Navigator.push(
                           context,
-                          _createRoute(
-                            DisciplinaDetalhesScreen(
-                              disciplina: disciplinas[index],
-                              onSalvarAnotacao: atualizarAnotacao,
-                              onAtualizarProvas: atualizarProvas,
-                              onAtualizarTrabalhos: atualizarTrabalhos,
-                            ),
+                          PageRouteBuilder(
+                            transitionDuration: const Duration(milliseconds: 500),
+                            pageBuilder: (context, animation, secondaryAnimation) => 
+                              DisciplinaDetalhesScreen(
+                                disciplina: {
+                                  'id': _disciplinas[index]['id'],
+                                  'nome': _disciplinas[index]['nome'],
+                                  'nota': _disciplinas[index]['nota'],
+                                  'presenca': _disciplinas[index]['presenca'],
+                                  'descricao': _disciplinas[index]['descricao'],
+                                  'provas': provas.map((p) => p['data']).toList(),
+                                  'trabalhos': trabalhos.map((t) => t['data']).toList(),
+                                  'anotacoes': anotacao?['texto'] ?? '',
+                                },
+                                dbHelper: _dbHelper,
+                              ),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              return FadeTransition(opacity: animation, child: child);
+                            },
                           ),
                         );
                       },
@@ -158,7 +139,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 onPressed: () {
                   Navigator.pushReplacement(
                     context,
-                    _createRoute(const LoginScreen()),
+                    PageRouteBuilder(
+                      transitionDuration: const Duration(milliseconds: 500),
+                      pageBuilder: (context, animation, secondaryAnimation) => 
+                        const LoginScreen(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
@@ -181,16 +169,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  PageRouteBuilder _createRoute(Widget page) {
-    return PageRouteBuilder(
-      transitionDuration: const Duration(milliseconds: 500),
-      pageBuilder: (context, animation, secondaryAnimation) => page,
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        return FadeTransition(opacity: animation, child: child);
-      },
     );
   }
 }
