@@ -3,7 +3,7 @@ import 'login_screen.dart';
 import 'disciplina_detalhes_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  final String username; // Agora o nome de usuário é passado como parâmetro
+  final String username;
 
   const HomeScreen({super.key, required this.username});
 
@@ -31,15 +31,40 @@ class _HomeScreenState extends State<HomeScreen> {
       'trabalhos': ['30/03/2025'],
       'anotacoes': '',
     },
+    {
+      'nome': 'Inglês',
+      'nota': 7.8,
+      'presenca': '85%',
+      'descricao': 'Gramática, literatura e redação.',
+      'provas': ['20/03/2025', '15/04/2025'],
+      'trabalhos': ['30/03/2025'],
+      'anotacoes': '',
+    },
   ];
 
   void atualizarAnotacao(String nome, String anotacao) {
     setState(() {
-      final index = disciplinas.indexWhere(
-        (disciplina) => disciplina['nome'] == nome,
-      );
+      final index = disciplinas.indexWhere((disciplina) => disciplina['nome'] == nome);
       if (index != -1) {
         disciplinas[index]['anotacoes'] = anotacao;
+      }
+    });
+  }
+
+  void atualizarProvas(String nome, List<String> novasProvas) {
+    setState(() {
+      final index = disciplinas.indexWhere((disciplina) => disciplina['nome'] == nome);
+      if (index != -1) {
+        disciplinas[index]['provas'] = novasProvas;
+      }
+    });
+  }
+
+  void atualizarTrabalhos(String nome, List<String> novosTrabalhos) {
+    setState(() {
+      final index = disciplinas.indexWhere((disciplina) => disciplina['nome'] == nome);
+      if (index != -1) {
+        disciplinas[index]['trabalhos'] = novosTrabalhos;
       }
     });
   }
@@ -116,6 +141,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             DisciplinaDetalhesScreen(
                               disciplina: disciplinas[index],
                               onSalvarAnotacao: atualizarAnotacao,
+                              onAtualizarProvas: atualizarProvas,
+                              onAtualizarTrabalhos: atualizarTrabalhos,
                             ),
                           ),
                         );
