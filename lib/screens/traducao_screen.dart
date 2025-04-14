@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -29,14 +28,10 @@ class _TraducaoScreenState extends State<TraducaoScreen> {
       final langpair = _traduzirParaIngles ? 'pt|en' : 'en|pt';
       final url =
           'https://api.mymemory.translated.net/get?q=${Uri.encodeComponent(_textoController.text)}&langpair=$langpair';
-      debugPrint('URL da API: $url'); // Log para debug
 
       final response = await http
           .get(Uri.parse(url))
-          .timeout(const Duration(seconds: 10)); // Timeout de 10 segundos
-
-      debugPrint('Status code: ${response.statusCode}'); // Log do status
-      debugPrint('Response body: ${response.body}'); // Log do corpo
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -47,27 +42,21 @@ class _TraducaoScreenState extends State<TraducaoScreen> {
         });
       } else {
         setState(() {
-          _textoTraduzido =
-              'Erro ao traduzir: ${response.statusCode}\n${response.body}';
+          _textoTraduzido = 'Erro ao traduzir: ${response.statusCode}';
         });
       }
     } on http.ClientException catch (e) {
       setState(() {
-        _textoTraduzido =
-            'Erro de conexão: ${e.message}\nVerifique sua internet';
+        _textoTraduzido = 'Erro de conexão: ${e.message}';
       });
-      debugPrint('ClientException: $e');
-    } on TimeoutException catch (e) {
+    } on TimeoutException {
       setState(() {
-        _textoTraduzido =
-            'Tempo excedido ao tentar conectar\nVerifique sua internet';
+        _textoTraduzido = 'Tempo excedido ao tentar conectar';
       });
-      debugPrint('TimeoutException: $e');
     } catch (e) {
       setState(() {
-        _textoTraduzido = 'Erro inesperado: $e';
+        _textoTraduzido = 'Erro inesperado';
       });
-      debugPrint('Erro inesperado: $e');
     } finally {
       setState(() {
         _isLoading = false;
@@ -78,42 +67,53 @@ class _TraducaoScreenState extends State<TraducaoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.lightGreen[50],
+      backgroundColor: Colors.lightGreen[200],
       appBar: AppBar(
-        title: const Text('Tradutor Inglês ⇄ Português'),
-        backgroundColor: Colors.green,
+        title: const Text('Tradutor', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.green[700],
+        elevation: 4,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Card(
           elevation: 6,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                // Botão compacto de troca de idioma
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    icon: Icon(Icons.swap_horiz, size: 20),
-                    label: Text(
-                      _traduzirParaIngles
-                          ? 'Português → Inglês'
-                          : 'Inglês → Português',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _traduzirParaIngles = !_traduzirParaIngles;
-                      });
-                    },
-                    style: OutlinedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 8),
-                      side: BorderSide(color: Colors.green),
-                    ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green[100],
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _traduzirParaIngles ? 'Português' : 'Inglês',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.arrow_forward,
+                        size: 18,
+                        color: Colors.green[700],
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _traduzirParaIngles ? 'Inglês' : 'Português',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -124,53 +124,85 @@ class _TraducaoScreenState extends State<TraducaoScreen> {
                         _traduzirParaIngles
                             ? 'Texto em Português'
                             : 'Texto em Inglês',
-                    border: const OutlineInputBorder(),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
                   ),
                   maxLines: 5,
                 ),
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _traduzirTexto,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () {
+                          setState(() {
+                            _traduzirParaIngles = !_traduzirParaIngles;
+                          });
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.green[700],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            side: BorderSide(color: Colors.green[700]!),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        child: const Text('Trocar Idioma'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _traduzirTexto,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        child:
+                            _isLoading
+                                ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                                : const Text('Traduzir'),
+                      ),
+                    ),
+                  ],
+                ),
+                if (_textoTraduzido.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  Text(
+                    _traduzirParaIngles
+                        ? 'Tradução em Inglês:'
+                        : 'Tradução em Português:',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
                     ),
                   ),
-                  child:
-                      _isLoading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text('Traduzir'),
-                ),
-                const SizedBox(height: 20),
-                if (_textoTraduzido.isNotEmpty)
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _traduzirParaIngles
-                            ? 'Tradução em Inglês:'
-                            : 'Tradução em Português:',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(_textoTraduzido),
-                      ),
-                    ],
+                  const SizedBox(height: 10),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.grey[300]!),
+                    ),
+                    child: Text(
+                      _textoTraduzido,
+                      style: const TextStyle(fontSize: 16),
+                    ),
                   ),
+                ],
               ],
             ),
           ),
